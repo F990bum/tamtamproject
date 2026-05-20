@@ -1,0 +1,1625 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>섬형 제한 공간 관광객 이동 경로 최적화 시스템</title>
+  <style>
+    :root {
+      --bg: #eef6f8;
+      --surface: #ffffff;
+      --surface-2: #f7fbfc;
+      --text: #15323f;
+      --muted: #607984;
+      --primary: #0b7c86;
+      --primary-dark: #075c63;
+      --accent: #f2a33a;
+      --danger: #d85757;
+      --ok: #3b9b6d;
+      --line: #d6e5e9;
+      --shadow: 0 18px 45px rgba(20, 55, 64, 0.12);
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", "Apple SD Gothic Neo", Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 12% 5%, rgba(11, 124, 134, 0.16), transparent 34%),
+        radial-gradient(circle at 86% 12%, rgba(242, 163, 58, 0.14), transparent 30%),
+        linear-gradient(180deg, #f3fbfc 0%, var(--bg) 100%);
+      min-height: 100vh;
+    }
+
+    header {
+      padding: 34px 24px 18px;
+    }
+
+    .hero {
+      max-width: 1180px;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.86);
+      border: 1px solid rgba(214, 229, 233, 0.8);
+      border-radius: 28px;
+      padding: 30px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .badge {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      border-radius: 999px;
+      padding: 8px 12px;
+      color: var(--primary-dark);
+      background: #e7f5f6;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+
+    h1 {
+      margin: 18px 0 12px;
+      font-size: clamp(27px, 4vw, 46px);
+      line-height: 1.15;
+      letter-spacing: -0.05em;
+    }
+
+    .hero p {
+      max-width: 920px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.8;
+    }
+
+    .layout {
+      width: min(1180px, calc(100% - 32px));
+      margin: 16px auto 42px;
+      display: grid;
+      grid-template-columns: 360px minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .control-panel {
+      position: sticky;
+      top: 16px;
+      max-height: calc(100vh - 32px);
+      overflow: auto;
+      padding: 18px;
+    }
+
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: baseline;
+      margin-bottom: 12px;
+    }
+
+    h2, h3 {
+      margin: 0;
+      letter-spacing: -0.03em;
+    }
+
+    h2 {
+      font-size: 20px;
+    }
+
+    h3 {
+      font-size: 16px;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 800;
+      color: #244652;
+      margin-bottom: 7px;
+    }
+
+    select, input[type="range"] {
+      width: 100%;
+    }
+
+    select {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 11px 12px;
+      background: #fbfeff;
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+    }
+
+    select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(11, 124, 134, 0.12);
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--line);
+      margin: 18px 0;
+    }
+
+    .slider-card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      background: var(--surface-2);
+      margin-bottom: 10px;
+    }
+
+    .slider-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 48px;
+      border-radius: 999px;
+      padding: 5px 8px;
+      background: #e7f5f6;
+      color: var(--primary-dark);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    input[type="range"] {
+      accent-color: var(--primary);
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 12px;
+      color: white;
+      font-weight: 900;
+      cursor: pointer;
+      background: var(--primary);
+      box-shadow: 0 10px 22px rgba(11, 124, 134, 0.18);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      background: var(--primary-dark);
+      box-shadow: 0 14px 26px rgba(11, 124, 134, 0.22);
+    }
+
+    button.secondary {
+      color: var(--primary-dark);
+      background: #e7f5f6;
+      box-shadow: none;
+    }
+
+    button.secondary:hover {
+      background: #d8eef1;
+    }
+
+    .main-panel {
+      display: grid;
+      gap: 18px;
+    }
+
+    .map-card {
+      padding: 18px;
+      overflow: hidden;
+    }
+
+    .map-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 18px;
+      margin-bottom: 12px;
+    }
+
+    .map-header p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--primary);
+      display: inline-block;
+    }
+
+    .dot.low { background: var(--ok); }
+    .dot.mid { background: var(--accent); }
+    .dot.high { background: var(--danger); }
+    .dot.route { background: #172a3a; }
+
+    .svg-wrap {
+      background: linear-gradient(180deg, #dff4f7 0%, #cfeef3 100%);
+      border: 1px solid #c6e2e7;
+      border-radius: 22px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    svg {
+      width: 100%;
+      display: block;
+      min-height: 430px;
+    }
+
+    .sea-grid {
+      stroke: rgba(255, 255, 255, 0.48);
+      stroke-width: 1;
+    }
+
+    .island-shape {
+      fill: #f6f0d6;
+      stroke: rgba(117, 105, 72, 0.32);
+      stroke-width: 3;
+    }
+
+    .inner-shape {
+      fill: rgba(94, 150, 93, 0.12);
+      stroke: rgba(94, 150, 93, 0.18);
+      stroke-width: 2;
+    }
+
+    .edge {
+      stroke-linecap: round;
+      stroke-width: 7;
+      opacity: 0.72;
+      cursor: pointer;
+      transition: stroke-width 0.15s ease, opacity 0.15s ease;
+    }
+
+    .edge:hover {
+      stroke-width: 10;
+      opacity: 0.95;
+    }
+
+    .edge-low { stroke: var(--ok); }
+    .edge-mid { stroke: var(--accent); }
+    .edge-high { stroke: var(--danger); }
+
+    .edge-route {
+      stroke: #172a3a;
+      stroke-width: 12;
+      opacity: 0.92;
+      filter: drop-shadow(0 3px 4px rgba(0,0,0,0.18));
+    }
+
+    .edge-route-overlay {
+      stroke: white;
+      stroke-linecap: round;
+      stroke-width: 4;
+      opacity: 0.8;
+      pointer-events: none;
+      stroke-dasharray: 8 9;
+      animation: dash 1.8s linear infinite;
+    }
+
+    @keyframes dash {
+      to { stroke-dashoffset: -34; }
+    }
+
+    .edge-label {
+      pointer-events: none;
+      font-size: 11px;
+      font-weight: 900;
+      fill: rgba(21, 50, 63, 0.68);
+      paint-order: stroke;
+      stroke: rgba(255, 255, 255, 0.82);
+      stroke-width: 4;
+    }
+
+    .node-group {
+      cursor: pointer;
+    }
+
+    .node-point {
+      fill: white;
+      stroke: var(--primary);
+      stroke-width: 4;
+      filter: drop-shadow(0 6px 8px rgba(20, 55, 64, 0.20));
+    }
+
+    .node-start { stroke: var(--ok); fill: #edf9f2; }
+    .node-end { stroke: var(--danger); fill: #fff0f0; }
+    .node-waypoint { stroke: var(--accent); fill: #fff8eb; }
+
+    .node-text {
+      font-size: 13px;
+      font-weight: 900;
+      fill: #15323f;
+      paint-order: stroke;
+      stroke: rgba(255,255,255,0.88);
+      stroke-width: 4;
+      pointer-events: none;
+    }
+
+    .node-wait {
+      font-size: 10px;
+      font-weight: 800;
+      fill: var(--muted);
+      paint-order: stroke;
+      stroke: rgba(255,255,255,0.86);
+      stroke-width: 3;
+      pointer-events: none;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .result-card, .info-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: 0 12px 28px rgba(20, 55, 64, 0.08);
+    }
+
+    .metric-label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      margin-bottom: 7px;
+    }
+
+    .metric-value {
+      font-size: 24px;
+      font-weight: 950;
+      letter-spacing: -0.04em;
+    }
+
+    .metric-desc {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .route-path {
+      font-size: 15px;
+      line-height: 1.8;
+      font-weight: 850;
+      color: var(--primary-dark);
+      word-break: keep-all;
+    }
+
+    .route-note {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .table-card {
+      padding: 18px;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 760px;
+      font-size: 13px;
+    }
+
+    th, td {
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      padding: 12px 10px;
+      vertical-align: top;
+    }
+
+    th {
+      color: #244652;
+      background: var(--surface-2);
+      font-size: 12px;
+      letter-spacing: -0.01em;
+    }
+
+    td {
+      color: #274c59;
+      line-height: 1.5;
+    }
+
+    .analysis-card {
+      padding: 18px;
+    }
+
+    .analysis-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .analysis-item {
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      padding: 14px;
+      line-height: 1.65;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .analysis-item strong {
+      display: block;
+      color: var(--text);
+      margin-bottom: 5px;
+    }
+
+    .empty {
+      padding: 20px;
+      color: var(--muted);
+      background: var(--surface-2);
+      border: 1px dashed #b8d3d9;
+      border-radius: 16px;
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .edge-list {
+      max-height: 310px;
+      overflow: auto;
+      padding-right: 3px;
+    }
+
+    .toast {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: #15323f;
+      color: white;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+      transition: opacity 0.18s ease, transform 0.18s ease;
+      font-size: 13px;
+      font-weight: 800;
+      z-index: 10;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .control-panel {
+        position: static;
+        max-height: none;
+      }
+
+      .result-grid, .analysis-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 640px) {
+      header {
+        padding: 18px 12px 8px;
+      }
+
+      .hero {
+        padding: 22px;
+      }
+
+      .layout {
+        width: calc(100% - 20px);
+      }
+
+      .two-col, .buttons, .result-grid, .analysis-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .map-header {
+        flex-direction: column;
+      }
+
+      .legend {
+        justify-content: flex-start;
+      }
+
+      svg {
+        min-height: 360px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <section class="hero">
+      <span class="badge">그래프 이론 · A* 알고리즘 · 혼잡도 반영 경로 탐색</span>
+      <h1>섬형 제한 공간에서의<br />관광객 이동 경로 최적화 시스템</h1>
+      <p>
+        제한된 이동 경로를 가진 섬 관광지를 그래프로 모델링하고, 이동 시간·혼잡도·대기 시간·날씨·시간대를 가중치로 반영해
+        현실적인 관광 경로를 추천하는 시뮬레이션 웹 페이지입니다. 단순 최단 경로와 혼잡 회피 경로의 차이를 시각적으로 비교할 수 있습니다.
+      </p>
+    </section>
+  </header>
+
+  <main class="layout">
+    <aside class="panel control-panel">
+      <div class="section-title">
+        <h2>시뮬레이션 설정</h2>
+        <span class="hint">GitHub Pages용 단일 HTML</span>
+      </div>
+
+      <div class="form-grid">
+        <div>
+          <label for="mapSelect">예시 지도</label>
+          <select id="mapSelect"></select>
+        </div>
+
+        <div>
+          <label for="objectiveSelect">최적화 기준</label>
+          <select id="objectiveSelect">
+            <option value="realistic">현실 반영: 이동 시간 + 혼잡도 + 대기 시간</option>
+            <option value="shortest">순수 최단 이동 시간</option>
+            <option value="avoidCongestion">혼잡 회피 강화</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="algorithmSelect">탐색 알고리즘</label>
+          <select id="algorithmSelect">
+            <option value="astar">A* 알고리즘</option>
+            <option value="dijkstra">다익스트라 알고리즘</option>
+            <option value="greedy">휴리스틱 탐색 Greedy Best-First</option>
+          </select>
+        </div>
+
+        <div class="two-col">
+          <div>
+            <label for="startSelect">시작 지점</label>
+            <select id="startSelect"></select>
+          </div>
+          <div>
+            <label for="endSelect">도착 지점</label>
+            <select id="endSelect"></select>
+          </div>
+        </div>
+
+        <div>
+          <label for="waypointSelect">경유 지점</label>
+          <select id="waypointSelect"></select>
+        </div>
+
+        <div class="two-col">
+          <div>
+            <label for="weatherSelect">날씨 조건</label>
+            <select id="weatherSelect">
+              <option value="clear">맑음</option>
+              <option value="rain">비: 숲길 지연</option>
+              <option value="wind">강풍: 해안길 지연</option>
+            </select>
+          </div>
+          <div>
+            <label for="timeSelect">시간대</label>
+            <select id="timeSelect">
+              <option value="morning">오전</option>
+              <option value="lunch">점심 피크</option>
+              <option value="afternoon">오후</option>
+              <option value="sunset">일몰 피크</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="slider-card">
+          <div class="slider-head">
+            <span>혼잡도 반영 강도</span>
+            <span class="chip" id="congestionWeightValue">12분</span>
+          </div>
+          <input id="congestionWeight" type="range" min="0" max="30" step="1" value="12" />
+          <p class="hint">혼잡도 100% 간선을 선택했을 때 추가되는 비용입니다.</p>
+        </div>
+
+        <div class="slider-card">
+          <div class="slider-head">
+            <span>대기 시간 반영 강도</span>
+            <span class="chip" id="waitWeightValue">1.0배</span>
+          </div>
+          <input id="waitWeight" type="range" min="0" max="2" step="0.1" value="1" />
+          <p class="hint">도착 노드의 예상 대기 시간을 경로 비용에 반영하는 배율입니다.</p>
+        </div>
+      </div>
+
+      <div class="buttons">
+        <button id="calculateBtn">경로 계산</button>
+        <button class="secondary" id="compareBtn">알고리즘 비교</button>
+      </div>
+      <button class="secondary" id="resetBtn" style="width:100%; margin-top:10px;">혼잡도 초기화</button>
+
+      <div class="divider"></div>
+
+      <div class="section-title">
+        <h3>간선별 혼잡도 조정</h3>
+        <span class="hint">0% 한산 · 100% 매우 혼잡</span>
+      </div>
+      <div id="edgeList" class="edge-list"></div>
+    </aside>
+
+    <section class="main-panel">
+      <section class="panel map-card">
+        <div class="map-header">
+          <div>
+            <h2 id="mapTitle">예시 지도</h2>
+            <p id="mapDescription"></p>
+          </div>
+          <div class="legend">
+            <span><i class="dot low"></i>한산</span>
+            <span><i class="dot mid"></i>보통</span>
+            <span><i class="dot high"></i>혼잡</span>
+            <span><i class="dot route"></i>선택 경로</span>
+          </div>
+        </div>
+        <div class="svg-wrap">
+          <svg id="mapSvg" viewBox="0 0 900 620" role="img" aria-label="섬 관광지 경로 그래프"></svg>
+        </div>
+      </section>
+
+      <section id="summarySection" class="result-grid"></section>
+
+      <section class="panel table-card">
+        <div class="section-title">
+          <h2>알고리즘 비교 결과</h2>
+          <span class="hint">같은 가중치 조건에서 계산</span>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>알고리즘</th>
+              <th>도출 경로</th>
+              <th>총 비용</th>
+              <th>기본 이동 시간</th>
+              <th>평균 혼잡도</th>
+              <th>탐색 노드 수</th>
+              <th>해석</th>
+            </tr>
+          </thead>
+          <tbody id="comparisonBody">
+            <tr>
+              <td colspan="7">경로 계산 또는 알고리즘 비교를 실행하면 결과가 표시됩니다.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="panel analysis-card">
+        <div class="section-title">
+          <h2>프로젝트 해석 포인트</h2>
+          <span class="hint">보고서/발표에 바로 활용 가능</span>
+        </div>
+        <div class="analysis-grid">
+          <article class="analysis-item">
+            <strong>1. 그래프 모델링</strong>
+            관광 지점을 노드, 이동 가능한 길을 간선으로 두고 각 간선에 이동 시간과 혼잡도를 저장합니다. 경로 탐색 문제를 수학적 최적화 문제로 바꾼 것입니다.
+          </article>
+          <article class="analysis-item">
+            <strong>2. 가중치 설계</strong>
+            단순 거리 대신 이동 시간, 혼잡도, 대기 시간, 날씨, 시간대를 하나의 비용 함수로 합산합니다. 비용 함수가 달라지면 같은 지도에서도 추천 경로가 달라집니다.
+          </article>
+          <article class="analysis-item">
+            <strong>3. 알고리즘 비교</strong>
+            다익스트라는 안정적인 최적 경로를 찾고, A*는 목적지까지의 추정 거리를 활용해 탐색을 줄입니다. Greedy 방식은 빠를 수 있지만 최적성을 보장하지 않습니다.
+          </article>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    const maps = {
+      basic: {
+        name: "기본 섬 관광 지도",
+        description: "선착장, 마을, 해변, 전망대가 연결된 기본형 지도입니다. 최단 경로와 혼잡 회피 경로의 차이를 확인하기 좋습니다.",
+        islandPath: "M91 346 C83 241 151 129 286 96 C399 68 516 91 639 126 C765 162 846 247 836 347 C828 435 742 515 612 543 C459 576 327 557 206 510 C123 477 91 416 91 346 Z",
+        innerPath: "M235 279 C260 209 349 163 456 164 C561 166 653 211 696 287 C727 342 704 413 639 455 C565 502 432 511 331 475 C244 444 207 361 235 279 Z",
+        nodes: [
+          { id: "dock", name: "선착장", x: 112, y: 340, wait: 5, type: "entry" },
+          { id: "village", name: "마을광장", x: 250, y: 330, wait: 8, type: "main" },
+          { id: "market", name: "식당가", x: 380, y: 310, wait: 12, type: "hotspot" },
+          { id: "museum", name: "박물관", x: 505, y: 362, wait: 6, type: "main" },
+          { id: "beach", name: "해변", x: 650, y: 420, wait: 13, type: "hotspot" },
+          { id: "lighthouse", name: "등대", x: 760, y: 278, wait: 9, type: "hotspot" },
+          { id: "observatory", name: "전망대", x: 562, y: 198, wait: 14, type: "hotspot" },
+          { id: "forest", name: "숲길입구", x: 420, y: 178, wait: 5, type: "forest" },
+          { id: "garden", name: "정상정원", x: 300, y: 210, wait: 7, type: "main" },
+          { id: "cafe", name: "해안카페", x: 210, y: 462, wait: 11, type: "coastal" }
+        ],
+        edges: [
+          { id: "e1", from: "dock", to: "village", time: 7, congestion: 35, type: "main" },
+          { id: "e2", from: "dock", to: "cafe", time: 9, congestion: 20, type: "coastal" },
+          { id: "e3", from: "village", to: "market", time: 6, congestion: 55, type: "main" },
+          { id: "e4", from: "market", to: "museum", time: 5, congestion: 62, type: "main" },
+          { id: "e5", from: "museum", to: "beach", time: 8, congestion: 45, type: "coastal" },
+          { id: "e6", from: "beach", to: "lighthouse", time: 10, congestion: 52, type: "coastal" },
+          { id: "e7", from: "lighthouse", to: "observatory", time: 9, congestion: 66, type: "main" },
+          { id: "e8", from: "observatory", to: "forest", time: 7, congestion: 40, type: "forest" },
+          { id: "e9", from: "forest", to: "garden", time: 5, congestion: 25, type: "forest" },
+          { id: "e10", from: "garden", to: "village", time: 6, congestion: 30, type: "main" },
+          { id: "e11", from: "cafe", to: "village", time: 5, congestion: 30, type: "coastal" },
+          { id: "e12", from: "cafe", to: "beach", time: 14, congestion: 22, type: "coastal" },
+          { id: "e13", from: "market", to: "forest", time: 9, congestion: 34, type: "forest" },
+          { id: "e14", from: "museum", to: "observatory", time: 8, congestion: 52, type: "main" },
+          { id: "e15", from: "garden", to: "dock", time: 12, congestion: 18, type: "main" }
+        ]
+      },
+      coastal: {
+        name: "해안 순환형 지도",
+        description: "해안 산책로가 길게 이어진 지도입니다. 강풍 조건에서는 해안 간선의 비용이 커져 내륙 우회 경로가 유리해질 수 있습니다.",
+        islandPath: "M82 332 C75 220 169 124 322 87 C474 50 656 97 766 178 C864 250 872 387 785 475 C692 568 511 585 348 552 C192 520 88 436 82 332 Z",
+        innerPath: "M223 313 C245 228 355 160 498 164 C630 167 732 240 742 337 C750 432 639 500 497 506 C345 512 201 429 223 313 Z",
+        nodes: [
+          { id: "harbor", name: "항구", x: 105, y: 336, wait: 6, type: "entry" },
+          { id: "westTrail", name: "서쪽산책로", x: 220, y: 225, wait: 4, type: "coastal" },
+          { id: "pebble", name: "몽돌해변", x: 320, y: 142, wait: 10, type: "hotspot" },
+          { id: "cliff", name: "절벽전망", x: 510, y: 132, wait: 9, type: "hotspot" },
+          { id: "light", name: "동쪽등대", x: 760, y: 245, wait: 11, type: "hotspot" },
+          { id: "eastBeach", name: "동해변", x: 740, y: 415, wait: 14, type: "hotspot" },
+          { id: "food", name: "푸드거리", x: 540, y: 475, wait: 15, type: "hotspot" },
+          { id: "temple", name: "작은사찰", x: 420, y: 358, wait: 5, type: "main" },
+          { id: "woods", name: "내륙숲길", x: 350, y: 268, wait: 4, type: "forest" },
+          { id: "summit", name: "섬정상", x: 510, y: 268, wait: 8, type: "main" },
+          { id: "market2", name: "중앙시장", x: 245, y: 430, wait: 12, type: "hotspot" },
+          { id: "pier", name: "작은부두", x: 148, y: 485, wait: 5, type: "coastal" }
+        ],
+        edges: [
+          { id: "c1", from: "harbor", to: "westTrail", time: 8, congestion: 28, type: "coastal" },
+          { id: "c2", from: "westTrail", to: "pebble", time: 7, congestion: 45, type: "coastal" },
+          { id: "c3", from: "pebble", to: "cliff", time: 10, congestion: 42, type: "coastal" },
+          { id: "c4", from: "cliff", to: "light", time: 13, congestion: 48, type: "coastal" },
+          { id: "c5", from: "light", to: "eastBeach", time: 9, congestion: 58, type: "coastal" },
+          { id: "c6", from: "eastBeach", to: "food", time: 8, congestion: 66, type: "main" },
+          { id: "c7", from: "food", to: "market2", time: 12, congestion: 62, type: "main" },
+          { id: "c8", from: "market2", to: "pier", time: 5, congestion: 35, type: "coastal" },
+          { id: "c9", from: "pier", to: "harbor", time: 7, congestion: 24, type: "coastal" },
+          { id: "c10", from: "harbor", to: "market2", time: 9, congestion: 40, type: "main" },
+          { id: "c11", from: "market2", to: "temple", time: 8, congestion: 32, type: "main" },
+          { id: "c12", from: "temple", to: "food", time: 7, congestion: 38, type: "main" },
+          { id: "c13", from: "temple", to: "summit", time: 6, congestion: 26, type: "forest" },
+          { id: "c14", from: "summit", to: "cliff", time: 7, congestion: 28, type: "forest" },
+          { id: "c15", from: "woods", to: "summit", time: 5, congestion: 18, type: "forest" },
+          { id: "c16", from: "westTrail", to: "woods", time: 8, congestion: 22, type: "forest" },
+          { id: "c17", from: "woods", to: "temple", time: 6, congestion: 20, type: "forest" },
+          { id: "c18", from: "summit", to: "light", time: 10, congestion: 34, type: "main" }
+        ]
+      },
+      festival: {
+        name: "축제 혼잡형 지도",
+        description: "중앙 축제장과 푸드존 주변 혼잡도가 높은 지도입니다. 사람이 몰리는 구역을 피해 우회시키는 효과를 분석하기 좋습니다.",
+        islandPath: "M88 361 C67 262 127 145 270 100 C391 62 547 74 686 132 C804 181 858 276 842 383 C827 484 720 548 572 562 C433 576 286 545 177 486 C113 451 96 413 88 361 Z",
+        innerPath: "M214 305 C251 213 370 156 514 173 C628 187 717 268 706 363 C695 449 580 501 455 493 C323 485 176 397 214 305 Z",
+        nodes: [
+          { id: "ferry", name: "선착장", x: 110, y: 358, wait: 7, type: "entry" },
+          { id: "gate", name: "입구게이트", x: 245, y: 365, wait: 10, type: "main" },
+          { id: "stage", name: "축제무대", x: 392, y: 320, wait: 20, type: "hotspot" },
+          { id: "foodZone", name: "푸드존", x: 510, y: 380, wait: 22, type: "hotspot" },
+          { id: "beachStage", name: "해변무대", x: 672, y: 445, wait: 18, type: "hotspot" },
+          { id: "photo", name: "포토존", x: 710, y: 280, wait: 16, type: "hotspot" },
+          { id: "hill", name: "언덕전망대", x: 560, y: 190, wait: 9, type: "main" },
+          { id: "quietForest", name: "조용한숲길", x: 395, y: 180, wait: 4, type: "forest" },
+          { id: "oldVillage", name: "옛마을", x: 250, y: 215, wait: 6, type: "main" },
+          { id: "southCafe", name: "남쪽카페", x: 258, y: 500, wait: 8, type: "coastal" },
+          { id: "bus", name: "셔틀정류장", x: 575, y: 520, wait: 6, type: "main" }
+        ],
+        edges: [
+          { id: "f1", from: "ferry", to: "gate", time: 6, congestion: 65, type: "main" },
+          { id: "f2", from: "gate", to: "stage", time: 5, congestion: 88, type: "main" },
+          { id: "f3", from: "stage", to: "foodZone", time: 5, congestion: 92, type: "main" },
+          { id: "f4", from: "foodZone", to: "beachStage", time: 8, congestion: 84, type: "coastal" },
+          { id: "f5", from: "beachStage", to: "photo", time: 10, congestion: 72, type: "coastal" },
+          { id: "f6", from: "photo", to: "hill", time: 7, congestion: 46, type: "main" },
+          { id: "f7", from: "hill", to: "quietForest", time: 6, congestion: 20, type: "forest" },
+          { id: "f8", from: "quietForest", to: "oldVillage", time: 5, congestion: 18, type: "forest" },
+          { id: "f9", from: "oldVillage", to: "gate", time: 7, congestion: 36, type: "main" },
+          { id: "f10", from: "ferry", to: "southCafe", time: 8, congestion: 25, type: "coastal" },
+          { id: "f11", from: "southCafe", to: "bus", time: 11, congestion: 30, type: "coastal" },
+          { id: "f12", from: "bus", to: "beachStage", time: 5, congestion: 42, type: "main" },
+          { id: "f13", from: "bus", to: "foodZone", time: 6, congestion: 60, type: "main" },
+          { id: "f14", from: "southCafe", to: "gate", time: 6, congestion: 38, type: "main" },
+          { id: "f15", from: "oldVillage", to: "stage", time: 9, congestion: 58, type: "main" },
+          { id: "f16", from: "quietForest", to: "stage", time: 8, congestion: 40, type: "forest" },
+          { id: "f17", from: "hill", to: "photo", time: 8, congestion: 48, type: "main" }
+        ]
+      }
+    };
+
+    const algorithmInfo = {
+      astar: {
+        label: "A*",
+        description: "휴리스틱을 함께 사용하므로 목적지 방향으로 탐색을 줄입니다. 휴리스틱이 과대평가되지 않으면 최적성을 유지합니다."
+      },
+      dijkstra: {
+        label: "다익스트라",
+        description: "모든 간선 비용이 0 이상일 때 기준 비용에 대한 최적 경로를 안정적으로 찾습니다."
+      },
+      greedy: {
+        label: "Greedy Best-First",
+        description: "목적지와 가까운 노드를 우선 선택합니다. 빠를 수 있지만 누적 비용 최적성을 보장하지 않습니다."
+      }
+    };
+
+    const weatherProfiles = {
+      clear: { label: "맑음", base: 1.00, coastalExtra: 0, forestExtra: 0 },
+      rain: { label: "비", base: 1.08, coastalExtra: 0.03, forestExtra: 0.10 },
+      wind: { label: "강풍", base: 1.05, coastalExtra: 0.13, forestExtra: 0.02 }
+    };
+
+    const timeProfiles = {
+      morning: { label: "오전", congestionMultiplier: 0.92, hotspotExtra: 0, coastalExtra: 0 },
+      lunch: { label: "점심 피크", congestionMultiplier: 1.14, hotspotExtra: 10, coastalExtra: 2 },
+      afternoon: { label: "오후", congestionMultiplier: 1.03, hotspotExtra: 4, coastalExtra: 0 },
+      sunset: { label: "일몰 피크", congestionMultiplier: 1.18, hotspotExtra: 7, coastalExtra: 9 }
+    };
+
+    let graph = null;
+    let lastResult = null;
+    let lastComparison = [];
+
+    const els = {
+      mapSelect: document.getElementById("mapSelect"),
+      objectiveSelect: document.getElementById("objectiveSelect"),
+      algorithmSelect: document.getElementById("algorithmSelect"),
+      startSelect: document.getElementById("startSelect"),
+      endSelect: document.getElementById("endSelect"),
+      waypointSelect: document.getElementById("waypointSelect"),
+      weatherSelect: document.getElementById("weatherSelect"),
+      timeSelect: document.getElementById("timeSelect"),
+      congestionWeight: document.getElementById("congestionWeight"),
+      congestionWeightValue: document.getElementById("congestionWeightValue"),
+      waitWeight: document.getElementById("waitWeight"),
+      waitWeightValue: document.getElementById("waitWeightValue"),
+      edgeList: document.getElementById("edgeList"),
+      mapTitle: document.getElementById("mapTitle"),
+      mapDescription: document.getElementById("mapDescription"),
+      mapSvg: document.getElementById("mapSvg"),
+      summarySection: document.getElementById("summarySection"),
+      comparisonBody: document.getElementById("comparisonBody"),
+      calculateBtn: document.getElementById("calculateBtn"),
+      compareBtn: document.getElementById("compareBtn"),
+      resetBtn: document.getElementById("resetBtn"),
+      toast: document.getElementById("toast")
+    };
+
+    function cloneMap(mapId) {
+      const source = maps[mapId];
+      return JSON.parse(JSON.stringify(source));
+    }
+
+    function init() {
+      Object.entries(maps).forEach(([id, map]) => {
+        const option = document.createElement("option");
+        option.value = id;
+        option.textContent = map.name;
+        els.mapSelect.appendChild(option);
+      });
+
+      loadMap("basic");
+      attachEvents();
+      calculateAndRender();
+    }
+
+    function attachEvents() {
+      els.mapSelect.addEventListener("change", () => {
+        loadMap(els.mapSelect.value);
+        calculateAndRender();
+      });
+
+      [
+        els.objectiveSelect,
+        els.algorithmSelect,
+        els.startSelect,
+        els.endSelect,
+        els.waypointSelect,
+        els.weatherSelect,
+        els.timeSelect
+      ].forEach((el) => el.addEventListener("change", calculateAndRender));
+
+      els.congestionWeight.addEventListener("input", () => {
+        updateWeightLabels();
+        calculateAndRender();
+      });
+
+      els.waitWeight.addEventListener("input", () => {
+        updateWeightLabels();
+        calculateAndRender();
+      });
+
+      els.calculateBtn.addEventListener("click", () => {
+        calculateAndRender();
+        showToast("선택한 알고리즘으로 경로를 다시 계산했습니다.");
+      });
+
+      els.compareBtn.addEventListener("click", () => {
+        renderComparison();
+        showToast("세 가지 탐색 알고리즘을 같은 조건에서 비교했습니다.");
+      });
+
+      els.resetBtn.addEventListener("click", () => {
+        const currentMapId = els.mapSelect.value;
+        const currentStart = els.startSelect.value;
+        const currentEnd = els.endSelect.value;
+        const currentWaypoint = els.waypointSelect.value;
+        loadMap(currentMapId, currentStart, currentEnd, currentWaypoint);
+        calculateAndRender();
+        showToast("간선 혼잡도를 기본값으로 초기화했습니다.");
+      });
+    }
+
+    function loadMap(mapId, preferredStart, preferredEnd, preferredWaypoint) {
+      graph = cloneMap(mapId);
+      els.mapTitle.textContent = graph.name;
+      els.mapDescription.textContent = graph.description;
+      fillNodeOptions(preferredStart, preferredEnd, preferredWaypoint);
+      renderEdgeSliders();
+      updateWeightLabels();
+      renderMap([]);
+    }
+
+    function fillNodeOptions(preferredStart, preferredEnd, preferredWaypoint) {
+      const defaults = getDefaultSelection();
+      fillSelect(els.startSelect, graph.nodes, preferredStart || defaults.start);
+      fillSelect(els.endSelect, graph.nodes, preferredEnd || defaults.end);
+
+      els.waypointSelect.innerHTML = "";
+      const none = document.createElement("option");
+      none.value = "none";
+      none.textContent = "경유지 없음";
+      els.waypointSelect.appendChild(none);
+      graph.nodes.forEach((node) => {
+        const option = document.createElement("option");
+        option.value = node.id;
+        option.textContent = node.name;
+        els.waypointSelect.appendChild(option);
+      });
+      els.waypointSelect.value = preferredWaypoint || "none";
+    }
+
+    function getDefaultSelection() {
+      const first = graph.nodes[0]?.id;
+      const last = graph.nodes[graph.nodes.length - 1]?.id;
+      const hotspot = graph.nodes.find((node) => node.type === "hotspot")?.id || last;
+      return { start: first, end: hotspot };
+    }
+
+    function fillSelect(select, nodes, selectedId) {
+      select.innerHTML = "";
+      nodes.forEach((node) => {
+        const option = document.createElement("option");
+        option.value = node.id;
+        option.textContent = node.name;
+        select.appendChild(option);
+      });
+      select.value = selectedId;
+    }
+
+    function renderEdgeSliders() {
+      els.edgeList.innerHTML = "";
+      graph.edges.forEach((edge) => {
+        const from = getNode(edge.from);
+        const to = getNode(edge.to);
+        const card = document.createElement("div");
+        card.className = "slider-card";
+        card.innerHTML = `
+          <div class="slider-head">
+            <span>${from.name} ↔ ${to.name}</span>
+            <span class="chip" id="chip-${edge.id}">${edge.congestion}%</span>
+          </div>
+          <input type="range" min="0" max="100" step="1" value="${edge.congestion}" aria-label="${from.name} ${to.name} 혼잡도" data-edge-id="${edge.id}" />
+          <p class="hint">기본 이동 시간 ${edge.time}분 · 유형 ${translateEdgeType(edge.type)}</p>
+        `;
+        card.querySelector("input").addEventListener("input", (event) => {
+          const targetEdge = graph.edges.find((item) => item.id === event.target.dataset.edgeId);
+          targetEdge.congestion = Number(event.target.value);
+          document.getElementById(`chip-${targetEdge.id}`).textContent = `${targetEdge.congestion}%`;
+          calculateAndRender();
+        });
+        els.edgeList.appendChild(card);
+      });
+    }
+
+    function translateEdgeType(type) {
+      const labels = { main: "주요 동선", coastal: "해안길", forest: "숲길" };
+      return labels[type] || "일반";
+    }
+
+    function getSettings(forceObjective) {
+      let congestionFactor = Number(els.congestionWeight.value);
+      let waitFactor = Number(els.waitWeight.value);
+      const objective = forceObjective || els.objectiveSelect.value;
+
+      if (objective === "shortest") {
+        congestionFactor = 0;
+        waitFactor = 0;
+      }
+
+      if (objective === "avoidCongestion") {
+        congestionFactor *= 1.65;
+        waitFactor *= 0.9;
+      }
+
+      return {
+        objective,
+        congestionFactor,
+        waitFactor,
+        weather: els.weatherSelect.value,
+        dayTime: els.timeSelect.value
+      };
+    }
+
+    function updateWeightLabels() {
+      els.congestionWeightValue.textContent = `${Number(els.congestionWeight.value).toFixed(0)}분`;
+      els.waitWeightValue.textContent = `${Number(els.waitWeight.value).toFixed(1)}배`;
+    }
+
+    function getNode(nodeId) {
+      return graph.nodes.find((node) => node.id === nodeId);
+    }
+
+    function getEdge(edgeId) {
+      return graph.edges.find((edge) => edge.id === edgeId);
+    }
+
+    function getEdgeBetween(a, b) {
+      return graph.edges.find((edge) => (edge.from === a && edge.to === b) || (edge.from === b && edge.to === a));
+    }
+
+    function getNeighbors(nodeId) {
+      return graph.edges
+        .filter((edge) => edge.from === nodeId || edge.to === nodeId)
+        .map((edge) => ({
+          edge,
+          node: edge.from === nodeId ? edge.to : edge.from
+        }));
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function getEffectiveCongestion(edge, settings) {
+      const timeProfile = timeProfiles[settings.dayTime];
+      let value = edge.congestion * timeProfile.congestionMultiplier;
+      if (edge.type === "coastal") value += timeProfile.coastalExtra;
+
+      const from = getNode(edge.from);
+      const to = getNode(edge.to);
+      if (from.type === "hotspot" || to.type === "hotspot") value += timeProfile.hotspotExtra;
+      return clamp(value, 0, 100);
+    }
+
+    function getMovementMultiplier(edge, settings) {
+      const weather = weatherProfiles[settings.weather];
+      let multiplier = weather.base;
+      if (edge.type === "coastal") multiplier += weather.coastalExtra;
+      if (edge.type === "forest") multiplier += weather.forestExtra;
+      return multiplier;
+    }
+
+    function edgeCost(edge, fromId, toId, settings) {
+      const destination = getNode(toId);
+      const baseMove = edge.time * getMovementMultiplier(edge, settings);
+      const congestionPenalty = (getEffectiveCongestion(edge, settings) / 100) * settings.congestionFactor;
+      const waitPenalty = destination.wait * settings.waitFactor;
+      return baseMove + congestionPenalty + waitPenalty;
+    }
+
+    function heuristic(nodeId, goalId) {
+      const a = getNode(nodeId);
+      const b = getNode(goalId);
+      if (!a || !b) return 0;
+      const dx = a.x - b.x;
+      const dy = a.y - b.y;
+      return Math.sqrt(dx * dx + dy * dy) / 42;
+    }
+
+    function solveRoute(startId, waypointId, endId, algorithm, settings) {
+      if (startId === endId) {
+        return { ok: false, reason: "시작 지점과 도착 지점이 같습니다." };
+      }
+
+      const stops = waypointId && waypointId !== "none" ? [waypointId, endId] : [endId];
+      let current = startId;
+      let fullPath = [startId];
+      let visitedTotal = 0;
+      let segmentDetails = [];
+
+      for (const stop of stops) {
+        if (current === stop) continue;
+        const segment = solveSegment(current, stop, algorithm, settings);
+        if (!segment.ok) return segment;
+        fullPath = fullPath.concat(segment.path.slice(1));
+        visitedTotal += segment.visitedCount;
+        segmentDetails.push(segment);
+        current = stop;
+      }
+
+      const metrics = calculateMetrics(fullPath, settings);
+      return {
+        ok: true,
+        algorithm,
+        path: fullPath,
+        visitedCount: visitedTotal,
+        segmentDetails,
+        ...metrics
+      };
+    }
+
+    function solveSegment(startId, goalId, algorithm, settings) {
+      if (algorithm === "greedy") return greedySearch(startId, goalId, settings);
+      return dijkstraOrAstar(startId, goalId, algorithm, settings);
+    }
+
+    function dijkstraOrAstar(startId, goalId, algorithm, settings) {
+      const open = [{ node: startId, g: 0, f: algorithm === "astar" ? heuristic(startId, goalId) : 0, path: [startId] }];
+      const best = new Map([[startId, 0]]);
+      let visitedCount = 0;
+
+      while (open.length > 0) {
+        open.sort((a, b) => a.f - b.f || a.g - b.g);
+        const current = open.shift();
+
+        if (current.g > (best.get(current.node) ?? Infinity) + 1e-9) continue;
+        visitedCount++;
+
+        if (current.node === goalId) {
+          return { ok: true, path: current.path, cost: current.g, visitedCount };
+        }
+
+        for (const { edge, node: next } of getNeighbors(current.node)) {
+          const step = edgeCost(edge, current.node, next, settings);
+          const newG = current.g + step;
+          if (newG + 1e-9 < (best.get(next) ?? Infinity)) {
+            best.set(next, newG);
+            const h = algorithm === "astar" ? heuristic(next, goalId) : 0;
+            open.push({ node: next, g: newG, f: newG + h, path: current.path.concat(next) });
+          }
+        }
+      }
+
+      return { ok: false, reason: "연결 가능한 경로를 찾지 못했습니다." };
+    }
+
+    function greedySearch(startId, goalId, settings) {
+      const open = [{ node: startId, path: [startId], cost: 0, h: heuristic(startId, goalId) }];
+      const visited = new Set();
+      let visitedCount = 0;
+
+      while (open.length > 0) {
+        open.sort((a, b) => a.h - b.h || a.cost - b.cost);
+        const current = open.shift();
+        if (visited.has(current.node)) continue;
+        visited.add(current.node);
+        visitedCount++;
+
+        if (current.node === goalId) {
+          return { ok: true, path: current.path, cost: current.cost, visitedCount };
+        }
+
+        for (const { edge, node: next } of getNeighbors(current.node)) {
+          if (visited.has(next)) continue;
+          open.push({
+            node: next,
+            path: current.path.concat(next),
+            cost: current.cost + edgeCost(edge, current.node, next, settings),
+            h: heuristic(next, goalId)
+          });
+        }
+      }
+
+      return { ok: false, reason: "Greedy 탐색으로 경로를 찾지 못했습니다." };
+    }
+
+    function calculateMetrics(path, settings) {
+      let totalCost = 0;
+      let baseMoveTime = 0;
+      let weatherMoveTime = 0;
+      let waitTime = 0;
+      let congestionPenalty = 0;
+      let congestionSum = 0;
+      let edgeCount = 0;
+      const edgeIds = [];
+
+      for (let i = 0; i < path.length - 1; i++) {
+        const fromId = path[i];
+        const toId = path[i + 1];
+        const edge = getEdgeBetween(fromId, toId);
+        if (!edge) continue;
+        const moveMultiplier = getMovementMultiplier(edge, settings);
+        const effectiveCongestion = getEffectiveCongestion(edge, settings);
+        const destination = getNode(toId);
+        const baseMove = edge.time;
+        const weatherMove = edge.time * moveMultiplier;
+        const congestionCost = (effectiveCongestion / 100) * settings.congestionFactor;
+        const waitCost = destination.wait * settings.waitFactor;
+
+        totalCost += weatherMove + congestionCost + waitCost;
+        baseMoveTime += baseMove;
+        weatherMoveTime += weatherMove;
+        waitTime += waitCost;
+        congestionPenalty += congestionCost;
+        congestionSum += effectiveCongestion;
+        edgeCount++;
+        edgeIds.push(edge.id);
+      }
+
+      return {
+        totalCost,
+        baseMoveTime,
+        weatherMoveTime,
+        waitTime,
+        congestionPenalty,
+        averageCongestion: edgeCount ? congestionSum / edgeCount : 0,
+        edgeIds
+      };
+    }
+
+    function calculateAndRender(updateComparison = true) {
+      const start = els.startSelect.value;
+      const end = els.endSelect.value;
+      const waypoint = sanitizeWaypoint(els.waypointSelect.value, start, end);
+      if (els.waypointSelect.value !== waypoint) els.waypointSelect.value = waypoint;
+
+      const settings = getSettings();
+      const algorithm = els.algorithmSelect.value;
+      const result = solveRoute(start, waypoint, end, algorithm, settings);
+      lastResult = result.ok ? result : null;
+
+      renderMap(result.ok ? result.edgeIds : []);
+      renderSummary(result, settings);
+      if (updateComparison) renderComparison();
+    }
+
+    function sanitizeWaypoint(waypoint, start, end) {
+      if (!waypoint || waypoint === "none") return "none";
+      if (waypoint === start || waypoint === end) return "none";
+      return waypoint;
+    }
+
+    function getBaselineResult() {
+      const start = els.startSelect.value;
+      const end = els.endSelect.value;
+      const waypoint = sanitizeWaypoint(els.waypointSelect.value, start, end);
+      return solveRoute(start, waypoint, end, "dijkstra", getSettings("shortest"));
+    }
+
+    function renderSummary(result, settings) {
+      if (!result.ok) {
+        els.summarySection.innerHTML = `<div class="empty" style="grid-column:1/-1;">${result.reason}</div>`;
+        return;
+      }
+
+      const baseline = getBaselineResult();
+      const routeText = pathToNames(result.path).join(" → ");
+      let detourText = "기준 경로 계산 불가";
+      let congestionText = "비교 불가";
+      let detourValue = "-";
+
+      if (baseline.ok) {
+        const detourRatio = baseline.baseMoveTime > 0 ? ((result.baseMoveTime - baseline.baseMoveTime) / baseline.baseMoveTime) * 100 : 0;
+        const congestionDiff = result.averageCongestion - baseline.averageCongestion;
+        detourValue = `${detourRatio >= 0 ? "+" : ""}${detourRatio.toFixed(1)}%`;
+        detourText = detourRatio > 3
+          ? `순수 최단 시간 경로보다 기본 이동 시간이 ${detourRatio.toFixed(1)}% 길어지는 우회 경로입니다.`
+          : `순수 최단 시간 경로와 이동 시간 차이가 작습니다.`;
+        congestionText = congestionDiff < -1
+          ? `평균 혼잡도는 기준 경로보다 ${Math.abs(congestionDiff).toFixed(1)}%p 낮습니다.`
+          : congestionDiff > 1
+            ? `평균 혼잡도는 기준 경로보다 ${congestionDiff.toFixed(1)}%p 높습니다.`
+            : `평균 혼잡도는 기준 경로와 비슷합니다.`;
+      }
+
+      const weatherLabel = weatherProfiles[settings.weather].label;
+      const timeLabel = timeProfiles[settings.dayTime].label;
+      const algorithmLabel = algorithmInfo[result.algorithm].label;
+      const objectiveLabel = getObjectiveLabel(settings.objective);
+
+      els.summarySection.innerHTML = `
+        <article class="result-card">
+          <div class="metric-label">예상 총 비용</div>
+          <div class="metric-value">${formatNumber(result.totalCost)}분</div>
+          <div class="metric-desc">이동·혼잡·대기 비용을 합산한 값</div>
+        </article>
+        <article class="result-card">
+          <div class="metric-label">기본 이동 시간</div>
+          <div class="metric-value">${formatNumber(result.baseMoveTime)}분</div>
+          <div class="metric-desc">혼잡과 대기를 제외한 간선 이동 시간</div>
+        </article>
+        <article class="result-card">
+          <div class="metric-label">평균 혼잡도</div>
+          <div class="metric-value">${formatNumber(result.averageCongestion)}%</div>
+          <div class="metric-desc">시간대 보정이 반영된 간선 평균값</div>
+        </article>
+        <article class="result-card">
+          <div class="metric-label">우회 정도</div>
+          <div class="metric-value">${detourValue}</div>
+          <div class="metric-desc">순수 최단 이동 시간 경로 대비</div>
+        </article>
+        <article class="info-card" style="grid-column:1/-1;">
+          <div class="metric-label">추천 경로 · ${algorithmLabel} · ${objectiveLabel}</div>
+          <div class="route-path">${routeText}</div>
+          <div class="route-note">
+            조건: ${weatherLabel}, ${timeLabel}. ${detourText} ${congestionText}
+            세부 비용은 날씨 보정 이동 ${formatNumber(result.weatherMoveTime)}분, 혼잡 패널티 ${formatNumber(result.congestionPenalty)}분, 대기 반영 ${formatNumber(result.waitTime)}분입니다.
+          </div>
+        </article>
+      `;
+    }
+
+    function getObjectiveLabel(objective) {
+      const labels = {
+        realistic: "현실 반영",
+        shortest: "순수 최단 이동 시간",
+        avoidCongestion: "혼잡 회피 강화"
+      };
+      return labels[objective] || objective;
+    }
+
+    function renderComparison() {
+      const start = els.startSelect.value;
+      const end = els.endSelect.value;
+      const waypoint = sanitizeWaypoint(els.waypointSelect.value, start, end);
+      const settings = getSettings();
+      const algorithms = ["dijkstra", "astar", "greedy"];
+      lastComparison = algorithms.map((algorithm) => solveRoute(start, waypoint, end, algorithm, settings));
+
+      els.comparisonBody.innerHTML = "";
+      lastComparison.forEach((result, index) => {
+        const algorithm = algorithms[index];
+        const tr = document.createElement("tr");
+
+        if (!result.ok) {
+          tr.innerHTML = `
+            <td>${algorithmInfo[algorithm].label}</td>
+            <td colspan="6">${result.reason}</td>
+          `;
+        } else {
+          tr.innerHTML = `
+            <td><strong>${algorithmInfo[algorithm].label}</strong></td>
+            <td>${pathToNames(result.path).join(" → ")}</td>
+            <td>${formatNumber(result.totalCost)}분</td>
+            <td>${formatNumber(result.baseMoveTime)}분</td>
+            <td>${formatNumber(result.averageCongestion)}%</td>
+            <td>${result.visitedCount}개</td>
+            <td>${makeAlgorithmComment(algorithm, result)}</td>
+          `;
+        }
+        els.comparisonBody.appendChild(tr);
+      });
+    }
+
+    function makeAlgorithmComment(algorithm, result) {
+      if (algorithm === "dijkstra") {
+        return "가중치 비용을 기준으로 안정적인 기준값 역할을 합니다.";
+      }
+      if (algorithm === "astar") {
+        return "직선거리 휴리스틱을 이용해 목적지 방향 탐색을 우선합니다.";
+      }
+      return "누적 비용보다 목적지 근접성을 우선하므로 결과가 빠르지만 우회 품질은 상황에 따라 달라집니다.";
+    }
+
+    function pathToNames(path) {
+      return path.map((id) => getNode(id)?.name || id);
+    }
+
+    function formatNumber(value) {
+      return Number(value).toFixed(value >= 100 ? 0 : 1);
+    }
+
+    function renderMap(routeEdgeIds = []) {
+      const svg = els.mapSvg;
+      svg.innerHTML = "";
+      renderBackground(svg);
+      renderEdges(svg, routeEdgeIds);
+      renderNodes(svg);
+    }
+
+    function renderBackground(svg) {
+      for (let x = 0; x <= 900; x += 90) {
+        const line = createSvg("line", { x1: x, y1: 0, x2: x, y2: 620, class: "sea-grid" });
+        svg.appendChild(line);
+      }
+      for (let y = 0; y <= 620; y += 90) {
+        const line = createSvg("line", { x1: 0, y1: y, x2: 900, y2: y, class: "sea-grid" });
+        svg.appendChild(line);
+      }
+      svg.appendChild(createSvg("path", { d: graph.islandPath, class: "island-shape" }));
+      svg.appendChild(createSvg("path", { d: graph.innerPath, class: "inner-shape" }));
+    }
+
+    function renderEdges(svg, routeEdgeIds) {
+      const routeSet = new Set(routeEdgeIds);
+
+      graph.edges.forEach((edge) => {
+        const from = getNode(edge.from);
+        const to = getNode(edge.to);
+        const isRoute = routeSet.has(edge.id);
+        const className = getCongestionClass(edge.congestion);
+        const line = createSvg("line", {
+          x1: from.x,
+          y1: from.y,
+          x2: to.x,
+          y2: to.y,
+          class: `edge ${className} ${isRoute ? "edge-route" : ""}`
+        });
+        line.appendChild(createSvg("title", {}, `${from.name} ↔ ${to.name} / 이동 ${edge.time}분 / 혼잡 ${edge.congestion}%`));
+        svg.appendChild(line);
+
+        if (isRoute) {
+          const overlay = createSvg("line", {
+            x1: from.x,
+            y1: from.y,
+            x2: to.x,
+            y2: to.y,
+            class: "edge-route-overlay"
+          });
+          svg.appendChild(overlay);
+        }
+      });
+
+      graph.edges.forEach((edge) => {
+        const from = getNode(edge.from);
+        const to = getNode(edge.to);
+        const midX = (from.x + to.x) / 2;
+        const midY = (from.y + to.y) / 2;
+        const label = createSvg("text", {
+          x: midX,
+          y: midY - 8,
+          class: "edge-label",
+          "text-anchor": "middle"
+        }, `${edge.time}분 · ${edge.congestion}%`);
+        svg.appendChild(label);
+      });
+    }
+
+    function renderNodes(svg) {
+      const start = els.startSelect.value;
+      const end = els.endSelect.value;
+      const waypoint = els.waypointSelect.value;
+
+      graph.nodes.forEach((node) => {
+        const group = createSvg("g", { class: "node-group" });
+        const nodeClass = node.id === start ? "node-start" : node.id === end ? "node-end" : node.id === waypoint ? "node-waypoint" : "";
+        const circle = createSvg("circle", {
+          cx: node.x,
+          cy: node.y,
+          r: 15,
+          class: `node-point ${nodeClass}`
+        });
+        circle.appendChild(createSvg("title", {}, `${node.name} / 예상 대기 ${node.wait}분`));
+        group.appendChild(circle);
+
+        const text = createSvg("text", {
+          x: node.x,
+          y: node.y - 24,
+          class: "node-text",
+          "text-anchor": "middle"
+        }, node.name);
+        group.appendChild(text);
+
+        const wait = createSvg("text", {
+          x: node.x,
+          y: node.y + 34,
+          class: "node-wait",
+          "text-anchor": "middle"
+        }, `대기 ${node.wait}분`);
+        group.appendChild(wait);
+
+        group.addEventListener("click", () => handleNodeClick(node.id));
+        svg.appendChild(group);
+      });
+    }
+
+    function handleNodeClick(nodeId) {
+      const start = els.startSelect.value;
+      if (nodeId !== start) {
+        els.endSelect.value = nodeId;
+        calculateAndRender();
+      }
+    }
+
+    function getCongestionClass(congestion) {
+      if (congestion < 40) return "edge-low";
+      if (congestion < 70) return "edge-mid";
+      return "edge-high";
+    }
+
+    function createSvg(tag, attrs = {}, text = "") {
+      const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+      Object.entries(attrs).forEach(([key, value]) => el.setAttribute(key, value));
+      if (text) el.textContent = text;
+      return el;
+    }
+
+    function showToast(message) {
+      els.toast.textContent = message;
+      els.toast.classList.add("show");
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => els.toast.classList.remove("show"), 1900);
+    }
+
+    init();
+  </script>
+</body>
+</html>
